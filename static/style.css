@@ -1,0 +1,323 @@
+/* Stili personalizzati per Gestionale Incassi */
+
+/* Variabili CSS */
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+}
+
+/* Stili generali */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+}
+
+/* Header personalizzato */
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+/* Sidebar migliorata */
+.sidebar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.sidebar .nav-link {
+    color: rgba(255,255,255,0.8);
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem;
+    margin: 0.25rem 0;
+    transition: all 0.3s ease;
+}
+
+.sidebar .nav-link:hover {
+    color: white;
+    background-color: rgba(255,255,255,0.1);
+    transform: translateX(5px);
+}
+
+.sidebar .nav-link.active {
+    background-color: rgba(255,255,255,0.2);
+    color: white;
+    font-weight: bold;
+}
+
+/* Card personalizzate */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+    font-weight: bold;
+}
+
+/* Bottoni personalizzati */
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 25px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    border-radius: 25px;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+    border: none;
+    border-radius: 25px;
+}
+
+/* Tabelle migliorate */
+.table {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.table thead th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    font-weight: 600;
+}
+
+/* Form personalizzati */
+.form-control {
+    border-radius: 25px;
+    border: 2px solid #e9ecef;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Alert personalizzati */
+.alert {
+    border-radius: 10px;
+    border: none;
+    font-weight: 500;
+}
+
+/* Badge personalizzati */
+.badge {
+    border-radius: 15px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+}
+
+/* Responsive design migliorato */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        z-index: 1000;
+        transition: left 0.3s ease;
+    }
+    
+    .sidebar.show {
+        left: 0;
+    }
+    
+    .main-content {
+        margin-left: 0;
+    }
+}
+
+/* Animazioni */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Stili per i grafici */
+.chart-container {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Stili per i totali */
+.total-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.total-card h3 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+/* Stili per le statistiche */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+/* Stili per i prelievi */
+.prelievo-info {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+/* Stili per le anomalie */
+.anomalia-alert {
+    background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-left: 5px solid #dc3545;
+}
+
+/* Stili per il monitoraggio monete */
+.coin-warning {
+    background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 1rem 0;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Stili per la ricerca */
+.search-form {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+/* Stili per la paginazione */
+.pagination {
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.page-link {
+    border-radius: 25px;
+    margin: 0 0.25rem;
+    border: none;
+    color: #667eea;
+}
+
+.page-link:hover {
+    background-color: #667eea;
+    color: white;
+}
+
+.page-item.active .page-link {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+/* Stili per i tooltip */
+.tooltip {
+    font-size: 0.875rem;
+}
+
+/* Stili per i modal */
+.modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0;
+}
+
+/* Stili per i loading */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Stili per i messaggi di successo */
+.success-message {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 1rem 0;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* Stili per i messaggi di errore */
+.error-message {
+    background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 1rem 0;
+    text-align: center;
+    font-weight: 500;
+} 

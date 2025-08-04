@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Gestione Utenti{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-users me-2"></i>Gestione Utenti</h2>
+        <a href="{{ url_for('nuovo_utente') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Nuovo Utente
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Lista Utenti</h5>
+        </div>
+        <div class="card-body">
+            {% if utenti %}
+                                    <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Username</th>
+                                        <th class="d-none d-md-table-cell">Nome Completo</th>
+                                        <th>Ruolo</th>
+                                        <th class="d-none d-lg-table-cell">Data Creazione</th>
+                                        <th>Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for utente in utenti %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ utente.username }}</strong>
+                                            {% if utente.id == current_user.id %}
+                                                <span class="badge bg-info ms-2">Tu</span>
+                                            {% endif %}
+                                            <br class="d-md-none">
+                                            <small class="text-muted d-md-none">{{ utente.nome_completo }}</small>
+                                        </td>
+                                        <td class="d-none d-md-table-cell">{{ utente.nome_completo }}</td>
+                                        <td>
+                                            {% if utente.is_admin %}
+                                                <span class="badge bg-danger">Amministratore</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Dipendente</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="d-none d-lg-table-cell">{{ utente.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('modifica_utente', id=utente.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary" title="Modifica">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                {% if utente.id != current_user.id %}
+                                                <form method="POST" action="{{ url_for('elimina_utente', id=utente.id) }}" 
+                                                      style="display: inline;" 
+                                                      onsubmit="return confirm('Sei sicuro di voler eliminare l\'utente \'{{ utente.username }}\'? Questa azione non può essere annullata.')">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Elimina">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Nessun utente trovato</h5>
+                <p class="text-muted">Crea il primo utente per iniziare</p>
+                <a href="{{ url_for('nuovo_utente') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Crea Primo Utente
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Conferma eliminazione con messaggio personalizzato
+function confermaEliminazione(username) {
+    return confirm(`Sei sicuro di voler eliminare l'utente '${username}'?\n\nQuesta azione non può essere annullata e l'utente non potrà più accedere al sistema.`);
+}
+</script>
+{% endblock %} 

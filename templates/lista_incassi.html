@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Lista Incassi - Gestionale Incassi{% endblock %}
+{% block page_title %}Lista Incassi{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-list me-2"></i>
+                    {% if current_user.is_admin %}
+                        Tutti gli Incassi
+                    {% else %}
+                        I Miei Incassi
+                    {% endif %}
+                </h6>
+                <a href="{{ url_for('nuovo_incasso') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i>
+                    Nuovo Incasso
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- Form di ricerca -->
+                <form method="GET" action="{{ url_for('lista_incassi') }}" class="mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="data_ricerca" class="form-label">Cerca per Data</label>
+                            <input type="date" class="form-control" id="data_ricerca" name="data_ricerca" 
+                                   value="{{ data_ricerca }}" placeholder="Seleziona data">
+                        </div>
+                        {% if current_user.is_admin %}
+                        <div class="col-md-4">
+                            <label for="operatore_ricerca" class="form-label">Cerca per Operatore</label>
+                            <input type="text" class="form-control" id="operatore_ricerca" name="operatore_ricerca" 
+                                   value="{{ operatore_ricerca }}" placeholder="Nome utente o nome completo">
+                        </div>
+                        {% endif %}
+                        <div class="col-md-4 d-flex align-items-end">
+                            <div class="btn-group w-100" role="group">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-1"></i>
+                                    Cerca
+                                </button>
+                                <a href="{{ url_for('lista_incassi') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-1"></i>
+                                    Pulisci
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                {% if incassi_raggruppati %}
+                    {% for mese, incassi in incassi_raggruppati.items() %}
+                    <div class="mb-4">
+                        <h5 class="text-primary border-bottom pb-2 mb-3">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            {{ mese.split('-')[1] }}/{{ mese.split('-')[0] }}
+                            <span class="badge bg-secondary ms-2">{{ incassi|length }} incassi</span>
+                        </h5>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        {% if current_user.is_admin %}
+                                        <th>Operatore</th>
+                                        {% endif %}
+                                        <th>Fondo Cassa</th>
+                                        <th>Incasso POS</th>
+                                        <th>Cash Totale</th>
+                                        <th>Cash Effettivo</th>
+                                        <th>Totale Atteso</th>
+                                        <th>Prelievo</th>
+                                        {% if current_user.is_admin %}
+                                        <th>Anomalie</th>
+                                        {% endif %}
+                                        <th>Stato</th>
+                                        <th>Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for incasso in incassi %}
+                                    <tr>
+                                        <td>{{ incasso.data.strftime('%d/%m/%Y') }}</td>
+                                        {% if current_user.is_admin %}
+                                        <td>{{ incasso.operatore.username }}</td>
+                                        {% endif %}
+                                        <td>€{{ "%.2f"|format(incasso.fondo_cassa_iniziale) }}</td>
+                                        <td>€{{ "%.2f"|format(incasso.incasso_pos) }}</td>
+                                        <td>€{{ "%.2f"|format(incasso.cash_totale_cassa) }}</td>
+                                        <td>€{{ "%.2f"|format(incasso.cash_totale_cassa - incasso.fondo_cassa_iniziale) }}</td>
+                                        <td>€{{ "%.2f"|format(incasso.incasso_pos + (incasso.cash_totale_cassa - incasso.fondo_cassa_iniziale) - incasso.prelievo_importo) }}</td>
+                                        <td>
+                                            {% if incasso.prelievo_importo > 0 %}
+                                                <span class="badge bg-info" title="{{ incasso.prelievo_motivo or 'Motivo non specificato' }}">
+                                                    €{{ "%.2f"|format(incasso.prelievo_importo) }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        {% if current_user.is_admin %}
+                                        <td>
+                                            {% set anomalie = [] %}
+                                            {% if incasso.fondo_cassa_iniziale < 0 %}
+                                                {% set _ = anomalie.append('Fondo negativo') %}
+                                            {% endif %}
+                                            {% if incasso.incasso_pos < 0 %}
+                                                {% set _ = anomalie.append('POS negativo') %}
+                                            {% endif %}
+                                            {% if incasso.cash_totale_cassa < 0 %}
+                                                {% set _ = anomalie.append('Cash negativo') %}
+                                            {% endif %}
+                                            {% set cash_effettivo = incasso.cash_totale_cassa - incasso.fondo_cassa_iniziale %}
+                                            {% set totale_dichiarato = incasso.cash_scontrinato + incasso.cash_non_scontrinato %}
+                                            {% if totale_dichiarato > 0 and (cash_effettivo - totale_dichiarato)|abs > 0.01 %}
+                                                {% set _ = anomalie.append('Discrepanza cash') %}
+                                            {% endif %}
+                                            
+                                            {% if anomalie %}
+                                                <span class="badge bg-danger" title="{{ anomalie|join(', ') }}">
+                                                    <i class="fas fa-exclamation-triangle"></i> {{ anomalie|length }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check"></i> OK
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        {% endif %}
+                                        <td>
+                                            {% if incasso.approvato %}
+                                                <span class="badge bg-success">Approvato</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">In Attesa</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('dettaglio_incasso', id=incasso.id) }}" class="btn btn-sm btn-outline-info" title="Visualizza">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if current_user.is_admin or (not incasso.approvato and incasso.operatore_id == current_user.id) %}
+                                                <a href="{{ url_for('modifica_incasso', id=incasso.id) }}" class="btn btn-sm btn-outline-warning" title="Modifica">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                {% endif %}
+                                                {% if incasso.approvato %}
+                                                <form method="POST" action="{{ url_for('cambia_stato_incasso', id=incasso.id) }}" style="display: inline;">
+                                                    <input type="hidden" name="azione" value="disapprova">
+                                                    <button type="submit" class="btn btn-sm btn-outline-warning" title="Riporta in attesa" onclick="return confirm('Confermi di riportare questo incasso in attesa di approvazione?')">
+                                                        <i class="fas fa-undo"></i>
+                                                    </button>
+                                                </form>
+                                                {% else %}
+                                                <form method="POST" action="{{ url_for('cambia_stato_incasso', id=incasso.id) }}" style="display: inline;">
+                                                    <input type="hidden" name="azione" value="approva">
+                                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Approva" onclick="return confirm('Confermi l\'approvazione di questo incasso?')">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                                <form method="POST" action="{{ url_for('elimina_incasso', id=incasso.id) }}" style="display: inline;">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                            title="Elimina"
+                                                            onclick="return confirm('ATTENZIONE: Stai per eliminare definitivamente questo incasso. Questa azione non può essere annullata. Confermi?')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nessun incasso trovato</h5>
+                    <p class="text-muted">
+                        {% if data_ricerca or operatore_ricerca %}
+                            Prova a modificare i criteri di ricerca
+                        {% else %}
+                            Inizia registrando il primo incasso
+                        {% endif %}
+                    </p>
+                    {% if not data_ricerca and not operatore_ricerca %}
+                    <a href="{{ url_for('nuovo_incasso') }}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-1"></i>
+                        Nuovo Incasso
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

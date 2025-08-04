@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Movimenti Cassaforte{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-vault"></i> Movimenti Cassaforte
+                    </h4>
+                    <a href="{{ url_for('nuovo_movimento_cassaforte') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nuovo Movimento
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Indicatori Saldi Cassaforte -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card border-primary">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-vault"></i> Totale in Cassaforte
+                                    </h6>
+                                    <div class="d-flex align-items-center">
+                                        <h3 class="mb-0 me-3 text-primary">
+                                            €{{ "%.2f"|format(totale_cassaforte) }}
+                                        </h3>
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-calculator"></i> Cash+Monete
+                                        </span>
+                                    </div>
+                                    <small class="text-muted">
+                                        Totale complessivo
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card {% if saldo_monete < 50 %}border-danger{% else %}border-success{% endif %}">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-coins"></i> Monete in Cassa
+                                    </h6>
+                                    <div class="d-flex align-items-center">
+                                        <h3 class="mb-0 me-3 {% if saldo_monete < 50 %}text-danger{% else %}text-success{% endif %}">
+                                            €{{ "%.2f"|format(saldo_monete) }}
+                                        </h3>
+                                        {% if saldo_monete < 50 %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-exclamation-triangle"></i> Livello Minimo
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle"></i> OK
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">
+                                        Livello minimo: €50.00
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-info">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-money-bill-wave"></i> Importo Cash
+                                    </h6>
+                                    <div class="d-flex align-items-center">
+                                        <h3 class="mb-0 me-3 text-info">
+                                            €{{ "%.2f"|format(saldo_banconote) }}
+                                        </h3>
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-banknote"></i> Banconote
+                                        </span>
+                                    </div>
+                                    <small class="text-muted">
+                                        Solo banconote
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabella Movimenti -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Tipo</th>
+                                    <th>Importo Totale</th>
+                                    <th>Monete</th>
+                                    <th>Banconote</th>
+                                    <th>Operatore</th>
+                                    <th>Descrizione</th>
+                                    <th>Nota</th>
+                                    <th>Stato</th>
+                                    {% if current_user.is_admin %}
+                                    <th>Azioni</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for movimento in movimenti %}
+                                <tr>
+                                    <td>{{ movimento.data.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        {% if movimento.tipo_movimento == 'entrata' %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-arrow-down"></i> Entrata
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-arrow-up"></i> Uscita
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>€{{ "%.2f"|format(movimento.importo) }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if movimento.monete_importo > 0 %}
+                                            <span class="badge bg-warning">
+                                                €{{ "%.2f"|format(movimento.monete_importo) }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if movimento.banconote_importo > 0 %}
+                                            <span class="badge bg-info">
+                                                €{{ "%.2f"|format(movimento.banconote_importo) }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ movimento.operatore.nome_completo or movimento.operatore.username }}</td>
+                                    <td>
+                                        {% if movimento.descrizione %}
+                                            <span title="{{ movimento.descrizione }}">
+                                                {{ movimento.descrizione[:30] }}{% if movimento.descrizione|length > 30 %}...{% endif %}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if movimento.descrizione %}
+                                            <span class="badge bg-light text-dark" title="{{ movimento.descrizione }}">
+                                                <i class="fas fa-sticky-note"></i> Nota
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if movimento.approvato %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> Approvato
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-clock"></i> In Attesa
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    {% if current_user.is_admin %}
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            {% if not movimento.approvato %}
+                                                <form method="POST" action="{{ url_for('approva_movimento_cassaforte', id=movimento.id) }}" 
+                                                      style="display: inline;">
+                                                    <button type="submit" class="btn btn-sm btn-success" 
+                                                            onclick="return confirm('Confermi l\'approvazione di questo movimento?')">
+                                                        <i class="fas fa-check"></i> Approva
+                                                    </button>
+                                                </form>
+                                            {% else %}
+                                                <span class="text-muted">Già approvato</span>
+                                            {% endif %}
+                                            <form method="POST" action="{{ url_for('elimina_movimento_cassaforte', id=movimento.id) }}" 
+                                                  style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                        title="Elimina"
+                                                        onclick="return confirm('ATTENZIONE: Stai per eliminare definitivamente questo movimento. Questa azione non può essere annullata. Confermi?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="{% if current_user.is_admin %}10{% else %}9{% endif %}" class="text-center text-muted">
+                                        <i class="fas fa-inbox"></i> Nessun movimento trovato
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Movimenti Cassaforte</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Mobile-first responsive design */
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: transform 0.3s ease;
+        }
+        
+        /* Mobile sidebar behavior */
+        @media (max-width: 767.98px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                z-index: 1030;
+                width: 280px;
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .sidebar-backdrop {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 1020;
+                display: none;
+            }
+            
+            .sidebar-backdrop.show {
+                display: block;
+            }
+            
+            .main-content {
+                margin-left: 0 !important;
+                width: 100% !important;
+            }
+            
+            .mobile-header {
+                display: flex !important;
+                align-items: center;
+                justify-content: space-between;
+                padding: 1rem;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                margin-bottom: 1rem;
+            }
+            
+            .mobile-menu-btn {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 1.5rem;
+                padding: 0.5rem;
+            }
+            
+            .mobile-user-info {
+                font-size: 0.9rem;
+                opacity: 0.9;
+            }
+        }
+        
+        /* Desktop sidebar behavior */
+        @media (min-width: 768px) {
+            .mobile-header {
+                display: none !important;
+            }
+            
+            .sidebar-backdrop {
+                display: none !important;
+            }
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin: 0.25rem 0;
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar .nav-link:hover {
+            color: white;
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        .main-content {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border-radius: 0.75rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        
+        .alert {
+            border-radius: 0.75rem;
+        }
+        
+        .table {
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+        
+        /* Mobile table improvements */
+        @media (max-width: 767.98px) {
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+            
+            .table td, .table th {
+                padding: 0.5rem 0.25rem;
+            }
+            
+            .btn-group .btn {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .container-fluid {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+        }
+        
+        /* Touch-friendly improvements */
+        .btn {
+            min-height: 44px;
+            min-width: 44px;
+        }
+        
+        .nav-link {
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Mobile form improvements */
+        @media (max-width: 767.98px) {
+            .form-control, .form-select {
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+            
+            .form-label {
+                font-weight: 600;
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Mobile Header -->
+    <div class="mobile-header d-none">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="mobile-user-info">
+            <i class="fas fa-user me-1"></i>
+            admin
+        </div>
+    </div>
+    
+    <!-- Sidebar Backdrop -->
+    <div class="sidebar-backdrop" onclick="closeSidebar()"></div>
+    
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse" id="sidebar">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white">
+                            <i class="fas fa-cash-register me-2"></i>
+                            Gestionale Incassi
+                        </h4>
+                    </div>
+                    
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link " href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link " href="/incassi/nuovo">
+                                <i class="fas fa-plus-circle me-2"></i>
+                                Nuovo Incasso
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link " href="/incassi/lista">
+                                <i class="fas fa-list me-2"></i>
+                                Lista Incassi
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link " href="/cassaforte/nuovo">
+                                <i class="fas fa-vault me-2"></i>
+                                Movimento Cassaforte
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/cassaforte/lista">
+                                <i class="fas fa-history me-2"></i>
+                                Storia Cassaforte
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item mt-3">
+                            <div class="border-top border-light pt-3">
+                                <h6 class="text-white-50 text-uppercase small">Amministrazione</h6>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link " href="/incassi/grafico">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Grafico Incassi
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="generaReport()">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Report Giornaliero
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link " href="/utenti/lista">
+                                <i class="fas fa-users me-2"></i>
+                                Gestione Utenti
+                            </a>
+                        </li>
+                        
+                    </ul>
+                    
+                    <div class="mt-auto pt-3">
+                        <div class="text-center">
+                            <small class="text-white-50">Utente: admin</small>
+                        </div>
+                        <div class="text-center mt-2">
+                            <a href="/logout" class="btn btn-outline-light btn-sm">
+                                <i class="fas fa-sign-out-alt me-1"></i>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2"></h1>
+                </div>
+                
+                
+                    
+                
+                
+                
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-vault"></i> Movimenti Cassaforte
+                    </h4>
+                    <a href="/cassaforte/nuovo" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nuovo Movimento
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Indicatore Saldo Monete -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-coins"></i> Saldo Monete Attuale
+                                    </h6>
+                                    <div class="d-flex align-items-center">
+                                        <h3 class="mb-0 me-3 text-success">
+                                            €130.00
+                                        </h3>
+                                        
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle"></i> OK
+                                            </span>
+                                        
+                                    </div>
+                                    <small class="text-muted">
+                                        Livello minimo: €50.00
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-info">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-info-circle"></i> Informazioni
+                                    </h6>
+                                    <ul class="list-unstyled mb-0">
+                                        <li><small>• Il saldo considera solo movimenti approvati</small></li>
+                                        <li><small>• Le monete sono separate dalle banconote</small></li>
+                                        <li><small>• L'indicatore diventa rosso sotto €50</small></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabella Movimenti -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Tipo</th>
+                                    <th>Importo Totale</th>
+                                    <th>Monete</th>
+                                    <th>Banconote</th>
+                                    <th>Operatore</th>
+                                    <th>Descrizione</th>
+                                    <th>Stato</th>
+                                    
+                                    <th>Azioni</th>
+                                    
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                                <tr>
+                                    <td>19/01/2024</td>
+                                    <td>
+                                        
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-arrow-down"></i> Entrata
+                                            </span>
+                                        
+                                    </td>
+                                    <td>
+                                        <strong>€80.00</strong>
+                                    </td>
+                                    <td>
+                                        
+                                            <span class="badge bg-warning">
+                                                €80.00
+                                            </span>
+                                        
+                                    </td>
+                                    <td>
+                                        
+                                            <span class="text-muted">-</span>
+                                        
+                                    </td>
+                                    <td>Dipendente Test</td>
+                                    <td>
+                                        
+                                            <span title="Versamento solo monete">
+                                                Versamento solo monete
+                                            </span>
+                                        
+                                    </td>
+                                    <td>
+                                        
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> Approvato
+                                            </span>
+                                        
+                                    </td>
+                                    
+                                    <td>
+                                        
+                                            <span class="text-muted">Già approvato</span>
+                                        
+                                    </td>
+                                    
+                                </tr>
+                                
+                                <tr>
+                                    <td>18/01/2024</td>
+                                    <td>
+                                        
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-arrow-up"></i> Uscita
+                                            </span>
+                                        
+                                    </td>
+                                    <td>
+                                        <strong>€150.00</strong>
+                                    </td>
+                                    <td>
+                                        
+                                            <span class="badge bg-warning">
+                                                €100.00
+                                            </span>
+                                        
+                                    </td>
+                                    <td>
+                                        
+                                            <span class="badge bg-info">
+                                                €50.00
+                                            </span>
+                                        
+                                    </td>
+                                    <td>Dipendente Test</td>
+                                    <td>
+                                        
+                                            <span title="Prelievo con più monete che banconote">
+                                                Prelievo con più monete che ba...
+                                            </span>
+                                        
+                                    </td>
+                                    <td>
+                                        
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-clock"></i> In Attesa
+                                            </span>
+                                        
+                                    </td>
+                                    
+                                    <td>
+                                        
+                                            <form method="POST" action="/cassaforte/4/approva" 
+                                                  style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-success" 
+                                                        onclick="return confirm('Confermi l\'approvazione di questo movimento?')">
+                                                    <i class="fas fa-check"></i> Approva
+                                                </button>
+                                            </form>
+                                        
+                                    </td>
+                                    
+                                </tr>
+                                
+                                <tr>
+                                    <td>17/01/2024</td>
+                                    <td>
+                                        
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-arrow-down"></i> Entrata
+                                            </span>
+                                        
+                                    </td>
+                                    <td>
+                                        <strong>€300.00</strong>
+                                    </td>
+                                    <td>
+                                        
+                                            <span class="text-muted">-</span>
+                                        
+                                    </td>
+                                    <td>
+                                        
+                                            <span class="badge bg-info">
+                                                €300.00
+                                            </span>
+                                        
+                                    </td>
+                                    <td>Dipendente Test</td>
+                                    <td>
+                                        
+                                            <span title="Versamento solo banconote">
+                                                Versamento solo banconote
+                                            </span>
+                                        
+                                    </td>
+                                    <td>
+                                        
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> Approvato
+                                            </span>
+                                        
+                                    </td>
+                                    
+                                    <td>
+                                        
+                                            <span class="text-muted">Già approvato</span>
+                                        
+                                    </td>
+                                    
+                                </tr>
+                                
+                                <tr>
+                                    <td>16/01/2024</td>
+                                    <td>
+                                        
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-arrow-up"></i> Uscita
+                                            </span>
+                                        
+                                    </td>
+                                    <td>
+                                        <strong>€200.00</strong>
+                                    </td>
+                                    <td>
+                                        
+                                            <span class="badge bg-warning">
+                                                €50.00
+                                            </span>
+                                        
+                                    </td>
+                                    <td>
+                                        
+                                            <span class="badge bg-info">
+                                                €150.00
+                                            </span>
+                                        
+                                    </td>
+                                    <td>Dipendente Test</td>
+                                    <td>
+                                        
+                                            <span title="Prelievo per fondo cassa">
+                                                Prelievo per fondo cassa
+                                            </span>
+                                        
+                                    </td>
+                                    <td>
+                                        
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> Approvato
+                                            </span>
+                                        
+                                    </td>
+                                    
+                                    <td>
+                                        
+                                            <span class="text-muted">Già approvato</span>
+                                        
+                                    </td>
+                                    
+                                </tr>
+                                
+                                <tr>
+                                    <td>15/01/2024</td>
+                                    <td>
+                                        
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-arrow-down"></i> Entrata
+                                            </span>
+                                        
+                                    </td>
+                                    <td>
+                                        <strong>€500.00</strong>
+                                    </td>
+                                    <td>
+                                        
+                                            <span class="badge bg-warning">
+                                                €100.00
+                                            </span>
+                                        
+                                    </td>
+                                    <td>
+                                        
+                                            <span class="badge bg-info">
+                                                €400.00
+                                            </span>
+                                        
+                                    </td>
+                                    <td>Dipendente Test</td>
+                                    <td>
+                                        
+                                            <span title="Versamento incassi giornalieri">
+                                                Versamento incassi giornalieri
+                                            </span>
+                                        
+                                    </td>
+                                    <td>
+                                        
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> Approvato
+                                            </span>
+                                        
+                                    </td>
+                                    
+                                    <td>
+                                        
+                                            <span class="text-muted">Già approvato</span>
+                                        
+                                    </td>
+                                    
+                                </tr>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+            </main>
+        </div>
+    </div>
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Mobile sidebar functions
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.querySelector('.sidebar-backdrop');
+            
+            sidebar.classList.toggle('show');
+            backdrop.classList.toggle('show');
+            
+            // Prevent body scroll when sidebar is open
+            document.body.style.overflow = sidebar.classList.contains('show') ? 'hidden' : '';
+        }
+        
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.querySelector('.sidebar-backdrop');
+            
+            sidebar.classList.remove('show');
+            backdrop.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        
+        // Close sidebar when clicking on a link (mobile)
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarLinks = document.querySelectorAll('.sidebar .nav-link');
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth < 768) {
+                        closeSidebar();
+                    }
+                });
+            });
+            
+            // Close sidebar on window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 768) {
+                    closeSidebar();
+                }
+            });
+        });
+        
+        function generaReport() {
+            const oggi = new Date().toISOString().split('T')[0];
+            fetch(`/api/report/giornaliero/${oggi}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Errore: ' + data.error);
+                    } else {
+                        const report = `
+REPORT GIORNALIERO - ${data.data}
+===============================
+Incassi registrati: ${data.incassi}
+Totale POS: €${data.totale_pos.toFixed(2)}
+Totale Cash: €${data.totale_cash.toFixed(2)}
+Totale Giornaliero: €${data.totale_giornaliero.toFixed(2)}
+Movimenti Cassaforte: ${data.movimenti_cassaforte}
+Saldo Cassaforte: €${data.saldo_cassaforte.toFixed(2)}
+                        `;
+                        alert(report);
+                    }
+                })
+                .catch(error => {
+                    console.error('Errore:', error);
+                    alert('Errore nella generazione del report');
+                });
+        }
+    </script>
+</body>
+</html> 

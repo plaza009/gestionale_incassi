@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Nuovo Incasso - Gestionale Incassi{% endblock %}
+{% block page_title %}Nuovo Incasso{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Registra Nuovo Incasso
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <!-- Data dell'incasso -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="data_incasso" class="form-label">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Data dell'Incasso *
+                                </label>
+                                <input type="date" class="form-control" id="data_incasso" name="data_incasso" 
+                                       value="{{ request.form.get('data_incasso', today) }}" required>
+                                <div class="form-text">Seleziona la data a cui si riferisce l'incasso</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Dati principali (obbligatori per tutti) -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Dati Principali (Obbligatori)</h6>
+                            
+                            <div class="mb-3">
+                                <label for="fondo_cassa" class="form-label">
+                                    <i class="fas fa-coins me-1"></i>
+                                    Fondo Cassa Iniziale (€) *
+                                </label>
+                                <input type="number" step="0.01" class="form-control" id="fondo_cassa" name="fondo_cassa" required>
+                                <div class="form-text">Importo presente in cassa all'apertura</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="incasso_pos" class="form-label">
+                                    <i class="fas fa-credit-card me-1"></i>
+                                    Incasso POS (€) *
+                                </label>
+                                <input type="number" step="0.01" class="form-control" id="incasso_pos" name="incasso_pos" required>
+                                <div class="form-text">Totale incassato con carte di credito/debito</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="cash_totale" class="form-label">
+                                    <i class="fas fa-money-bill-wave me-1"></i>
+                                    Cash Totale in Cassa (€) *
+                                </label>
+                                <input type="number" step="0.01" class="form-control" id="cash_totale" name="cash_totale" required>
+                                <div class="form-text">Importo totale trovato in cassa a fine serata</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Dettagli cash (solo per admin) -->
+                        <div class="col-md-6">
+                            {% if current_user.is_admin %}
+                            <h6 class="text-primary mb-3">Dettagli Cash (Amministratore)</h6>
+                            
+                            <div class="mb-3">
+                                <label for="cash_scontrinato" class="form-label">
+                                    <i class="fas fa-receipt me-1"></i>
+                                    Cash Scontrinato (€)
+                                </label>
+                                <input type="number" step="0.01" class="form-control" id="cash_scontrinato" name="cash_scontrinato" value="0">
+                                <div class="form-text">Cash con scontrino fiscale</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="cash_non_scontrinato" class="form-label">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    Cash Non Scontrinato (€)
+                                </label>
+                                <input type="number" step="0.01" class="form-control" id="cash_non_scontrinato" name="cash_non_scontrinato" value="0">
+                                <div class="form-text">Cash senza scontrino fiscale</div>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Informazioni per Dipendenti
+                                </h6>
+                                <p class="mb-0">
+                                    I campi "Cash Scontrinato" e "Cash Non Scontrinato" saranno compilati dall'amministratore 
+                                    durante la revisione dei dati. È sufficiente inserire i tre campi obbligatori.
+                                </p>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="mb-3">
+                                <label for="prelievo_importo" class="form-label">
+                                    <i class="fas fa-hand-holding-usd me-1"></i>
+                                    Prelievo (€)
+                                </label>
+                                <input type="number" step="0.01" class="form-control" id="prelievo_importo" name="prelievo_importo" value="0" min="0">
+                                <div class="form-text">Importo prelevato durante il turno (opzionale)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="prelievo_motivo" class="form-label">
+                                    <i class="fas fa-tag me-1"></i>
+                                    Motivo Prelievo
+                                </label>
+                                <select class="form-control" id="prelievo_motivo_select" onchange="gestisciMotivoPrelievo()">
+                                    <option value="">Seleziona motivo...</option>
+                                    <option value="fuori busta">Fuori busta</option>
+                                    <option value="fornitore">Fornitore</option>
+                                    <option value="custom">Altro (personalizzato)</option>
+                                </select>
+                                <input type="text" class="form-control mt-2" id="prelievo_motivo" name="prelievo_motivo" 
+                                       placeholder="Inserisci motivo personalizzato..." style="display: none;">
+                                <div class="form-text">Motivo del prelievo</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="note" class="form-label">
+                                    <i class="fas fa-sticky-note me-1"></i>
+                                    Note
+                                </label>
+                                <textarea class="form-control" id="note" name="note" rows="3" placeholder="Note aggiuntive..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Calcoli automatici -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-calculator me-2"></i>
+                                    Calcoli Automatici
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <strong>Incasso Cash Effettivo:</strong>
+                                        <span id="incasso_cash_effettivo">€0.00</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Totale Incasso Atteso:</strong>
+                                        <span id="totale_atteso">€0.00</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Stato Coerenza:</strong>
+                                        <span id="coerenza" class="badge bg-secondary">Non calcolato</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>
+                                    Annulla
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i>
+                                    {% if current_user.is_admin %}
+                                        Registra Incasso
+                                    {% else %}
+                                        Invia per Approvazione
+                                    {% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Calcoli automatici in tempo reale
+function calcolaIncassoCashEffettivo() {
+    const fondoCassa = parseFloat(document.getElementById('fondo_cassa').value) || 0;
+    const cashTotale = parseFloat(document.getElementById('cash_totale').value) || 0;
+    return cashTotale - fondoCassa;
+}
+
+function calcolaTotaleAtteso() {
+    const incassoPos = parseFloat(document.getElementById('incasso_pos').value) || 0;
+    const incassoCashEffettivo = calcolaIncassoCashEffettivo();
+    return incassoPos + incassoCashEffettivo;
+}
+
+function verificaCoerenza() {
+    const incassoCashEffettivo = calcolaIncassoCashEffettivo();
+    const cashScontrinato = parseFloat(document.getElementById('cash_scontrinato')?.value || 0);
+    const cashNonScontrinato = parseFloat(document.getElementById('cash_non_scontrinato')?.value || 0);
+    const totaleDichiarato = cashScontrinato + cashNonScontrinato;
+    const differenza = incassoCashEffettivo - totaleDichiarato;
+    
+    if (Math.abs(differenza) <= 0.01) {
+        return { stato: 'Coerente', classe: 'bg-success' };
+    } else if (differenza > 0) {
+        return { stato: `Eccedenza €${differenza.toFixed(2)}`, classe: 'bg-warning' };
+    } else {
+        return { stato: `Deficit €${Math.abs(differenza).toFixed(2)}`, classe: 'bg-danger' };
+    }
+}
+
+function aggiornaCalcoli() {
+    const incassoCashEffettivo = calcolaIncassoCashEffettivo();
+    const totaleAtteso = calcolaTotaleAtteso();
+    const coerenza = verificaCoerenza();
+    
+    document.getElementById('incasso_cash_effettivo').textContent = `€${incassoCashEffettivo.toFixed(2)}`;
+    document.getElementById('totale_atteso').textContent = `€${totaleAtteso.toFixed(2)}`;
+    
+    const coerenzaElement = document.getElementById('coerenza');
+    coerenzaElement.textContent = coerenza.stato;
+    coerenzaElement.className = `badge ${coerenza.classe}`;
+}
+
+// Event listeners per aggiornamento automatico
+document.getElementById('fondo_cassa').addEventListener('input', aggiornaCalcoli);
+document.getElementById('incasso_pos').addEventListener('input', aggiornaCalcoli);
+document.getElementById('cash_totale').addEventListener('input', aggiornaCalcoli);
+
+// Aggiungi event listeners solo se i campi esistono (solo per admin)
+const cashScontrinatoElement = document.getElementById('cash_scontrinato');
+const cashNonScontrinatoElement = document.getElementById('cash_non_scontrinato');
+
+if (cashScontrinatoElement) {
+    cashScontrinatoElement.addEventListener('input', aggiornaCalcoli);
+}
+if (cashNonScontrinatoElement) {
+    cashNonScontrinatoElement.addEventListener('input', aggiornaCalcoli);
+}
+
+// Gestione campo motivo prelievo
+function gestisciMotivoPrelievo() {
+    const select = document.getElementById('prelievo_motivo_select');
+    const input = document.getElementById('prelievo_motivo');
+    const selectedValue = select.value;
+    
+    if (selectedValue === 'custom') {
+        input.style.display = 'block';
+        input.focus();
+        input.value = '';
+    } else if (selectedValue) {
+        input.style.display = 'none';
+        input.value = selectedValue;
+    } else {
+        input.style.display = 'none';
+        input.value = '';
+    }
+}
+</script>
+{% endblock %} 

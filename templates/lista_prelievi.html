@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Gestione Prelievi - Gestionale Incassi{% endblock %}
+{% block page_title %}Gestione Prelievi{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-hand-holding-usd me-2"></i>
+                    Gestione Prelievi
+                </h6>
+            </div>
+            <div class="card-body">
+                <!-- Form di ricerca -->
+                <form method="GET" action="{{ url_for('lista_prelievi') }}" class="mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="data_inizio" class="form-label">Data Inizio</label>
+                            <input type="date" class="form-control" id="data_inizio" name="data_inizio" 
+                                   value="{{ data_inizio }}" placeholder="Data inizio">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="data_fine" class="form-label">Data Fine</label>
+                            <input type="date" class="form-control" id="data_fine" name="data_fine" 
+                                   value="{{ data_fine }}" placeholder="Data fine">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="operatore_ricerca" class="form-label">Operatore</label>
+                            <input type="text" class="form-control" id="operatore_ricerca" name="operatore_ricerca" 
+                                   value="{{ operatore_ricerca }}" placeholder="Nome operatore">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="btn-group w-100" role="group">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-1"></i>
+                                    Cerca
+                                </button>
+                                <a href="{{ url_for('lista_prelievi') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-1"></i>
+                                    Pulisci
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Riepilogo -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h4>€{{ "%.2f"|format(totale_prelievi) }}</h4>
+                                <small>Totale Prelievi</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h4>€{{ "%.2f"|format(totale_incassi) }}</h4>
+                                <small>Totale Incassi</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h4>{{ "%.1f"|format(percentuale_prelievi) }}%</h4>
+                                <small>% Prelievi</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if prelievi_raggruppati %}
+                    {% for mese, dati in prelievi_raggruppati.items() %}
+                    <div class="mb-4">
+                        <h5 class="text-primary border-bottom pb-2 mb-3">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            {{ mese.split('-')[1] }}/{{ mese.split('-')[0] }}
+                            <span class="badge bg-secondary ms-2">{{ dati.prelievi|length }} prelievi</span>
+                            <span class="badge bg-primary ms-2">€{{ "%.2f"|format(dati.totale_prelievi) }}</span>
+                        </h5>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Operatore</th>
+                                        <th>Incasso POS</th>
+                                        <th>Cash Effettivo</th>
+                                        <th>Totale Incasso</th>
+                                        <th>Prelievo</th>
+                                        <th>Motivo</th>
+                                        <th>% Prelievo</th>
+                                        <th>Stato</th>
+                                        <th>Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for prelievo in dati.prelievi %}
+                                    <tr>
+                                        <td>{{ prelievo.data.strftime('%d/%m/%Y') }}</td>
+                                        <td>{{ prelievo.operatore.username }}</td>
+                                        <td>€{{ "%.2f"|format(prelievo.incasso_pos) }}</td>
+                                        <td>€{{ "%.2f"|format(prelievo.cash_totale_cassa - prelievo.fondo_cassa_iniziale) }}</td>
+                                        <td>€{{ "%.2f"|format(prelievo.incasso_pos + (prelievo.cash_totale_cassa - prelievo.fondo_cassa_iniziale)) }}</td>
+                                        <td>
+                                            <span class="badge bg-warning">
+                                                €{{ "%.2f"|format(prelievo.prelievo_importo) }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span title="{{ prelievo.prelievo_motivo or 'Motivo non specificato' }}">
+                                                {{ (prelievo.prelievo_motivo or 'Non specificato')[:30] }}{% if prelievo.prelievo_motivo and prelievo.prelievo_motivo|length > 30 %}...{% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% set totale_incasso = prelievo.incasso_pos + (prelievo.cash_totale_cassa - prelievo.fondo_cassa_iniziale) %}
+                                            {% set percentuale = (prelievo.prelievo_importo / totale_incasso * 100) if totale_incasso > 0 else 0 %}
+                                            <span class="badge bg-{{ 'danger' if percentuale > 20 else 'warning' if percentuale > 10 else 'success' }}">
+                                                {{ "%.1f"|format(percentuale) }}%
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if prelievo.approvato %}
+                                                <span class="badge bg-success">Approvato</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">In Attesa</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('dettaglio_incasso', id=prelievo.id) }}" class="btn btn-sm btn-outline-info" title="Visualizza">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{{ url_for('modifica_incasso', id=prelievo.id) }}" class="btn btn-sm btn-outline-warning" title="Modifica">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-hand-holding-usd fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nessun prelievo trovato</h5>
+                    <p class="text-muted">
+                        {% if data_inizio or data_fine or operatore_ricerca %}
+                            Prova a modificare i criteri di ricerca
+                        {% else %}
+                            Non ci sono prelievi registrati nel sistema
+                        {% endif %}
+                    </p>
+                    {% if not data_inizio and not data_fine and not operatore_ricerca %}
+                    <a href="{{ url_for('lista_incassi') }}" class="btn btn-primary">
+                        <i class="fas fa-list me-1"></i>
+                        Vedi Tutti gli Incassi
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

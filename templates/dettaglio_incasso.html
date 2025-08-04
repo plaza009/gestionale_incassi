@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}Dettaglio Incasso - Gestionale Incassi{% endblock %}
+{% block page_title %}Dettaglio Incasso{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Dettagli Incasso
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">Informazioni Generali</h6>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Data:</strong></td>
+                                <td>{{ incasso.data.strftime('%d/%m/%Y') }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Operatore:</strong></td>
+                                <td>{{ incasso.operatore.username }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Registrato il:</strong></td>
+                                <td>{{ incasso.created_at.strftime('%d/%m/%Y alle %H:%M') }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Stato:</strong></td>
+                                <td>
+                                    {% if incasso.approvato %}
+                                        <span class="badge bg-success">Approvato</span>
+                                        {% if incasso.approvato_il %}
+                                            <br><small class="text-muted">Approvato il {{ incasso.approvato_il.strftime('%d/%m/%Y alle %H:%M') }}</small>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-warning">In Attesa di Approvazione</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">Dati Principali</h6>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Fondo Cassa Iniziale:</strong></td>
+                                <td>€{{ "%.2f"|format(incasso.fondo_cassa_iniziale) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Incasso POS:</strong></td>
+                                <td>€{{ "%.2f"|format(incasso.incasso_pos) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cash Totale in Cassa:</strong></td>
+                                <td>€{{ "%.2f"|format(incasso.cash_totale_cassa) }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">Dettagli Cash</h6>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Cash Scontrinato:</strong></td>
+                                <td>€{{ "%.2f"|format(incasso.cash_scontrinato) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cash Non Scontrinato:</strong></td>
+                                <td>€{{ "%.2f"|format(incasso.cash_non_scontrinato) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Totale Dichiarato:</strong></td>
+                                <td>€{{ "%.2f"|format(incasso.cash_scontrinato + incasso.cash_non_scontrinato) }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">Calcoli Automatici</h6>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Incasso Cash Effettivo:</strong></td>
+                                <td>€{{ "%.2f"|format(incasso_cash_effettivo) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Totale Incasso Atteso:</strong></td>
+                                <td>€{{ "%.2f"|format(totale_atteso) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Stato Coerenza:</strong></td>
+                                <td>
+                                    {% if "Coerente" in coerenza %}
+                                        <span class="badge bg-success">{{ coerenza }}</span>
+                                    {% elif "Eccedenza" in coerenza %}
+                                        <span class="badge bg-warning">{{ coerenza }}</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">{{ coerenza }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if incasso.prelievo_importo > 0 %}
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-hand-holding-usd me-2"></i>
+                            Informazioni Prelievo
+                        </h6>
+                        <div class="alert alert-info">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Importo Prelievo:</strong> €{{ "%.2f"|format(incasso.prelievo_importo) }}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Motivo:</strong> {{ incasso.prelievo_motivo or 'Non specificato' }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if incasso.note %}
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">Note</h6>
+                        <div class="alert alert-light">
+                            {{ incasso.note }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if current_user.is_admin and anomalie %}
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                            Anomalie Rilevate
+                        </h6>
+                        {% for anomalia in anomalie %}
+                        <div class="alert alert-{{ anomalia.severita }} alert-dismissible fade show" role="alert">
+                            <strong>{{ anomalia.messaggio }}</strong>
+                            {% if anomalia.dettagli %}
+                            <br><small>{{ anomalia.dettagli }}</small>
+                            {% endif %}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">Stato Approvazione</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td><strong>Stato:</strong></td>
+                                        <td>
+                                            {% if incasso.approvato %}
+                                                <span class="badge bg-success">Approvato</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">In Attesa di Approvazione</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% if incasso.approvato %}
+                                    <tr>
+                                        <td><strong>Approvato da:</strong></td>
+                                        <td>{{ incasso.approvatore.username if incasso.approvatore else 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Data approvazione:</strong></td>
+                                        <td>{{ incasso.approvato_il.strftime('%d/%m/%Y %H:%M') if incasso.approvato_il else 'N/A' }}</td>
+                                    </tr>
+                                    {% endif %}
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('lista_incassi') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Torna alla Lista
+                            </a>
+                            
+                            <div>
+                                {% if current_user.is_admin or (not incasso.approvato and incasso.operatore_id == current_user.id) %}
+                                <a href="{{ url_for('modifica_incasso', id=incasso.id) }}" class="btn btn-warning me-2">
+                                    <i class="fas fa-edit me-1"></i>
+                                    Modifica Dati
+                                </a>
+                                {% endif %}
+                                {% if incasso.approvato %}
+                                <form method="POST" action="{{ url_for('cambia_stato_incasso', id=incasso.id) }}" style="display: inline;">
+                                    <input type="hidden" name="azione" value="disapprova">
+                                    <button type="submit" class="btn btn-outline-warning me-2" onclick="return confirm('Confermi di riportare questo incasso in attesa di approvazione?')">
+                                        <i class="fas fa-undo me-1"></i>
+                                        Riporta in Attesa
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form method="POST" action="{{ url_for('cambia_stato_incasso', id=incasso.id) }}" style="display: inline;">
+                                    <input type="hidden" name="azione" value="approva">
+                                    <button type="submit" class="btn btn-success" onclick="return confirm('Confermi l\'approvazione di questo incasso?')">
+                                        <i class="fas fa-check me-1"></i>
+                                        Approva Incasso
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <form method="POST" action="{{ url_for('elimina_incasso', id=incasso.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-danger" 
+                                            onclick="return confirm('ATTENZIONE: Stai per eliminare definitivamente questo incasso. Questa azione non può essere annullata. Confermi?')">
+                                        <i class="fas fa-trash me-1"></i>
+                                        Elimina
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Riepilogo
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-3">
+                            <h4 class="text-primary">€{{ "%.2f"|format(incasso.incasso_pos) }}</h4>
+                            <small class="text-muted">Incasso POS</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-3">
+                            <h4 class="text-success">€{{ "%.2f"|format(incasso_cash_effettivo) }}</h4>
+                            <small class="text-muted">Cash Effettivo</small>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="border rounded p-3 bg-light">
+                            <h4 class="text-dark">€{{ "%.2f"|format(totale_atteso) }}</h4>
+                            <small class="text-muted">Totale Incasso</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Informazioni
+                    </h6>
+                    <ul class="mb-0 small">
+                        <li>L'incasso cash effettivo è calcolato come: Cash Totale - Fondo Cassa</li>
+                        <li>Il totale atteso è: Incasso POS + Cash Effettivo</li>
+                        <li>La coerenza verifica la corrispondenza tra cash dichiarato e cash effettivo</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

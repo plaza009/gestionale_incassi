@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Nuovo Movimento Cassaforte{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Nuovo Movimento Cassaforte</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="data_movimento" class="form-label">Data Movimento *</label>
+                                    <input type="date" class="form-control" id="data_movimento" name="data_movimento" 
+                                           value="{{ today }}" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="tipo_movimento" class="form-label">Tipo Movimento *</label>
+                                    <select class="form-select" id="tipo_movimento" name="tipo_movimento" required>
+                                        <option value="">Seleziona tipo...</option>
+                                        <option value="entrata">Entrata</option>
+                                        <option value="uscita">Uscita</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="importo" class="form-label">Importo Totale (€) *</label>
+                                    <input type="number" step="0.01" class="form-control" id="importo" name="importo" 
+                                           placeholder="0.00" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="monete_importo" class="form-label">Importo in Monete (€)</label>
+                                    <input type="number" step="0.01" class="form-control" id="monete_importo" name="monete_importo" 
+                                           placeholder="0.00" value="0.00">
+                                    <div class="form-text">Importo in monete (opzionale)</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="banconote_importo" class="form-label">Importo in Banconote (€)</label>
+                                    <input type="number" step="0.01" class="form-control" id="banconote_importo" name="banconote_importo" 
+                                           placeholder="0.00" value="0.00">
+                                    <div class="form-text">Importo in banconote (opzionale)</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="descrizione" class="form-label">Nota (Opzionale)</label>
+                                    <textarea class="form-control" id="descrizione" name="descrizione" rows="3" 
+                                              placeholder="Inserisci una nota per specificare dettagli del movimento..."></textarea>
+                                    <div class="form-text">Puoi aggiungere una nota per specificare dettagli o motivazioni del movimento</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Nota:</strong> Se specifichi importi in monete e banconote, la loro somma deve essere uguale all'importo totale.
+                            Se non specifichi questi dettagli, l'intero importo sarà considerato in banconote.
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('lista_movimenti_cassaforte') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Annulla
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Salva Movimento
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const importoInput = document.getElementById('importo');
+    const moneteInput = document.getElementById('monete_importo');
+    const banconoteInput = document.getElementById('banconote_importo');
+    
+    // Aggiorna automaticamente il campo banconote quando cambia l'importo totale
+    function aggiornaBanconote() {
+        const importo = parseFloat(importoInput.value) || 0;
+        const monete = parseFloat(moneteInput.value) || 0;
+        const banconote = importo - monete;
+        
+        if (banconote >= 0) {
+            banconoteInput.value = banconote.toFixed(2);
+        }
+    }
+    
+    // Aggiorna automaticamente l'importo totale quando cambiano monete o banconote
+    function aggiornaTotale() {
+        const monete = parseFloat(moneteInput.value) || 0;
+        const banconote = parseFloat(banconoteInput.value) || 0;
+        const totale = monete + banconote;
+        
+        importoInput.value = totale.toFixed(2);
+    }
+    
+    importoInput.addEventListener('input', aggiornaBanconote);
+    moneteInput.addEventListener('input', aggiornaTotale);
+    banconoteInput.addEventListener('input', aggiornaTotale);
+});
+</script>
+{% endblock %} 

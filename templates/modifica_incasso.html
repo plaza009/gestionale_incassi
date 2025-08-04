@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Modifica Incasso - Gestionale Incassi{% endblock %}
+{% block page_title %}Modifica Incasso{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-edit me-2"></i>
+                    Modifica Incasso
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Modifica Amministratore
+                    </h6>
+                    <p class="mb-0">
+                        Stai modificando l'incasso registrato da <strong>{{ incasso.operatore.username }}</strong> 
+                        per la data <strong>{{ incasso.data.strftime('%d/%m/%Y') }}</strong>.
+                    </p>
+                </div>
+                
+                <form method="POST">
+                    <!-- Data dell'incasso -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="data_incasso" class="form-label">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Data dell'Incasso *
+                                </label>
+                                <input type="date" class="form-control" id="data_incasso" name="data_incasso" 
+                                       value="{{ incasso.data.isoformat() }}" required>
+                                <div class="form-text">Seleziona la data a cui si riferisce l'incasso</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Dati principali -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Dati Principali</h6>
+                            
+                            <div class="mb-3">
+                                <label for="fondo_cassa" class="form-label">
+                                    <i class="fas fa-coins me-1"></i>
+                                    Fondo Cassa Iniziale (€) *
+                                </label>
+                                <input type="number" step="0.01" class="form-control" id="fondo_cassa" name="fondo_cassa" 
+                                       value="{{ incasso.fondo_cassa_iniziale }}" required>
+                                <div class="form-text">Importo presente in cassa all'apertura</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="incasso_pos" class="form-label">
+                                    <i class="fas fa-credit-card me-1"></i>
+                                    Incasso POS (€) *
+                                </label>
+                                <input type="number" step="0.01" class="form-control" id="incasso_pos" name="incasso_pos" 
+                                       value="{{ incasso.incasso_pos }}" required>
+                                <div class="form-text">Totale incassato con carte di credito/debito</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="cash_totale" class="form-label">
+                                    <i class="fas fa-money-bill-wave me-1"></i>
+                                    Cash Totale in Cassa (€) *
+                                </label>
+                                <input type="number" step="0.01" class="form-control" id="cash_totale" name="cash_totale" 
+                                       value="{{ incasso.cash_totale_cassa }}" required>
+                                <div class="form-text">Importo totale trovato in cassa a fine serata</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Dettagli cash -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Dettagli Cash</h6>
+                            
+                            <div class="mb-3">
+                                <label for="cash_scontrinato" class="form-label">
+                                    <i class="fas fa-receipt me-1"></i>
+                                    Cash Scontrinato (€)
+                                </label>
+                                <input type="number" step="0.01" class="form-control" id="cash_scontrinato" name="cash_scontrinato" 
+                                       value="{{ incasso.cash_scontrinato }}">
+                                <div class="form-text">Cash con scontrino fiscale</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="cash_non_scontrinato" class="form-label">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    Cash Non Scontrinato (€)
+                                </label>
+                                <input type="number" step="0.01" class="form-control" id="cash_non_scontrinato" name="cash_non_scontrinato" 
+                                       value="{{ incasso.cash_non_scontrinato }}">
+                                <div class="form-text">Cash senza scontrino fiscale</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="prelievo_importo" class="form-label">
+                                    <i class="fas fa-hand-holding-usd me-1"></i>
+                                    Prelievo (€)
+                                </label>
+                                <input type="number" step="0.01" class="form-control" id="prelievo_importo" name="prelievo_importo" 
+                                       value="{{ incasso.prelievo_importo or 0 }}" min="0">
+                                <div class="form-text">Importo prelevato durante il turno (opzionale)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="prelievo_motivo" class="form-label">
+                                    <i class="fas fa-tag me-1"></i>
+                                    Motivo Prelievo
+                                </label>
+                                <select class="form-control" id="prelievo_motivo_select" onchange="gestisciMotivoPrelievo()">
+                                    <option value="">Seleziona motivo...</option>
+                                    <option value="fuori busta" {% if incasso.prelievo_motivo == 'fuori busta' %}selected{% endif %}>Fuori busta</option>
+                                    <option value="fornitore" {% if incasso.prelievo_motivo == 'fornitore' %}selected{% endif %}>Fornitore</option>
+                                    <option value="custom" {% if incasso.prelievo_motivo and incasso.prelievo_motivo not in ['fuori busta', 'fornitore'] %}selected{% endif %}>Altro (personalizzato)</option>
+                                </select>
+                                <input type="text" class="form-control mt-2" id="prelievo_motivo" name="prelievo_motivo" 
+                                       value="{{ incasso.prelievo_motivo or '' }}" 
+                                       placeholder="Inserisci motivo personalizzato..." 
+                                       style="display: {% if incasso.prelievo_motivo and incasso.prelievo_motivo not in ['fuori busta', 'fornitore'] %}block{% else %}none{% endif %};">
+                                <div class="form-text">Motivo del prelievo</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="note" class="form-label">
+                                    <i class="fas fa-sticky-note me-1"></i>
+                                    Note
+                                </label>
+                                <textarea class="form-control" id="note" name="note" rows="3" placeholder="Note aggiuntive...">{{ incasso.note or '' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Calcoli automatici -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-calculator me-2"></i>
+                                    Calcoli Automatici
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <strong>Incasso Cash Effettivo:</strong>
+                                        <span id="incasso_cash_effettivo">€0.00</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Totale Incasso Atteso:</strong>
+                                        <span id="totale_atteso">€0.00</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Stato Coerenza:</strong>
+                                        <span id="coerenza" class="badge bg-secondary">Non calcolato</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('dettaglio_incasso', id=incasso.id) }}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>
+                                    Annulla
+                                </a>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-save me-1"></i>
+                                    Salva Modifiche
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Calcoli automatici in tempo reale
+function calcolaIncassoCashEffettivo() {
+    const fondoCassa = parseFloat(document.getElementById('fondo_cassa').value) || 0;
+    const cashTotale = parseFloat(document.getElementById('cash_totale').value) || 0;
+    return cashTotale - fondoCassa;
+}
+
+function calcolaTotaleAtteso() {
+    const incassoPos = parseFloat(document.getElementById('incasso_pos').value) || 0;
+    const incassoCashEffettivo = calcolaIncassoCashEffettivo();
+    return incassoPos + incassoCashEffettivo;
+}
+
+function verificaCoerenza() {
+    const incassoCashEffettivo = calcolaIncassoCashEffettivo();
+    const cashScontrinato = parseFloat(document.getElementById('cash_scontrinato').value) || 0;
+    const cashNonScontrinato = parseFloat(document.getElementById('cash_non_scontrinato').value) || 0;
+    const totaleDichiarato = cashScontrinato + cashNonScontrinato;
+    const differenza = incassoCashEffettivo - totaleDichiarato;
+    
+    if (Math.abs(differenza) <= 0.01) {
+        return { stato: 'Coerente', classe: 'bg-success' };
+    } else if (differenza > 0) {
+        return { stato: `Eccedenza €${differenza.toFixed(2)}`, classe: 'bg-warning' };
+    } else {
+        return { stato: `Deficit €${Math.abs(differenza).toFixed(2)}`, classe: 'bg-danger' };
+    }
+}
+
+function aggiornaCalcoli() {
+    const incassoCashEffettivo = calcolaIncassoCashEffettivo();
+    const totaleAtteso = calcolaTotaleAtteso();
+    const coerenza = verificaCoerenza();
+    
+    document.getElementById('incasso_cash_effettivo').textContent = `€${incassoCashEffettivo.toFixed(2)}`;
+    document.getElementById('totale_atteso').textContent = `€${totaleAtteso.toFixed(2)}`;
+    
+    const coerenzaElement = document.getElementById('coerenza');
+    coerenzaElement.textContent = coerenza.stato;
+    coerenzaElement.className = `badge ${coerenza.classe}`;
+}
+
+// Event listeners per aggiornamento automatico
+document.getElementById('fondo_cassa').addEventListener('input', aggiornaCalcoli);
+document.getElementById('incasso_pos').addEventListener('input', aggiornaCalcoli);
+document.getElementById('cash_totale').addEventListener('input', aggiornaCalcoli);
+document.getElementById('cash_scontrinato').addEventListener('input', aggiornaCalcoli);
+document.getElementById('cash_non_scontrinato').addEventListener('input', aggiornaCalcoli);
+
+// Calcola valori iniziali
+document.addEventListener('DOMContentLoaded', function() {
+    aggiornaCalcoli();
+});
+
+// Gestione campo motivo prelievo
+function gestisciMotivoPrelievo() {
+    const select = document.getElementById('prelievo_motivo_select');
+    const input = document.getElementById('prelievo_motivo');
+    const selectedValue = select.value;
+    
+    if (selectedValue === 'custom') {
+        input.style.display = 'block';
+        input.focus();
+        input.value = '';
+    } else if (selectedValue) {
+        input.style.display = 'none';
+        input.value = selectedValue;
+    } else {
+        input.style.display = 'none';
+        input.value = '';
+    }
+}
+</script>
+{% endblock %} 
