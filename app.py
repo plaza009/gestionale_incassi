@@ -807,22 +807,36 @@ def lista_prelievi():
                          totale_incassi=totale_incassi,
                          percentuale_prelievi=percentuale_prelievi)
 
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        print("✔️ Tabelle create")
-        
-        # Crea utente admin se non esiste
-        admin = User.query.filter_by(username='admin').first()
-        if not admin:
-            admin = User(
-                username='admin',
-                password_hash=generate_password_hash('admin123'),
-                is_admin=True,
-                nome_completo='Amministratore Sistema'
-            )
-            db.session.add(admin)
-            db.session.commit()
-            print("Utente admin creato: username='admin', password='admin123'")
+# Inizializzazione database e utenti
+with app.app_context():
+    db.create_all()
+    print("✔️ Tabelle create")
     
+    # Crea utente admin se non esiste
+    admin = User.query.filter_by(username='admin').first()
+    if not admin:
+        admin = User(
+            username='admin',
+            password_hash=generate_password_hash('admin123'),
+            is_admin=True,
+            nome_completo='Amministratore Sistema'
+        )
+        db.session.add(admin)
+        db.session.commit()
+        print("Utente admin creato: username='admin', password='admin123'")
+    
+    # Crea utente dipendente se non esiste
+    dipendente = User.query.filter_by(username='dipendente').first()
+    if not dipendente:
+        dipendente = User(
+            username='dipendente',
+            password_hash=generate_password_hash('dipendente123'),
+            is_admin=False,
+            nome_completo='Dipendente Sistema'
+        )
+        db.session.add(dipendente)
+        db.session.commit()
+        print("Utente dipendente creato: username='dipendente', password='dipendente123'")
+
+if __name__ == '__main__':
     app.run(debug=True)
