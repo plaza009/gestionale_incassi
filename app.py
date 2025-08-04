@@ -810,6 +810,7 @@ def lista_prelievi():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        print("✔️ Tabelle create")
         
         # Crea utente admin se non esiste
         admin = User.query.filter_by(username='admin').first()
@@ -824,4 +825,4 @@ if __name__ == '__main__':
             db.session.commit()
             print("Utente admin creato: username='admin', password='admin123'")
     
-    app.run(debug=True) 
+    app.run(debug=True)
