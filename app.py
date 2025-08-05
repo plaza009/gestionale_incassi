@@ -383,9 +383,29 @@ def lista_incassi():
 @login_required
 @admin_required
 def grafico_incassi():
-    # Ottieni gli ultimi 30 giorni di dati
-    data_inizio = date.today() - timedelta(days=30)
-    incassi = Incasso.query.filter(Incasso.data >= data_inizio).order_by(Incasso.data).all()
+    # Gestione parametri di data
+    data_dal_str = request.args.get('data_dal')
+    data_al_str = request.args.get('data_al')
+    
+    if data_dal_str and data_al_str:
+        # Se sono specificate le date, usa quelle
+        try:
+            data_inizio = datetime.strptime(data_dal_str, '%Y-%m-%d').date()
+            data_fine = datetime.strptime(data_al_str, '%Y-%m-%d').date()
+        except ValueError:
+            # Se le date non sono valide, usa gli ultimi 30 giorni
+            data_fine = date.today()
+            data_inizio = data_fine - timedelta(days=30)
+    else:
+        # Default: ultimi 30 giorni
+        data_fine = date.today()
+        data_inizio = data_fine - timedelta(days=30)
+    
+    # Query con filtro per data
+    incassi = Incasso.query.filter(
+        Incasso.data >= data_inizio,
+        Incasso.data <= data_fine
+    ).order_by(Incasso.data).all()
     
     # Raggruppa per data
     dati_grafico = {}
@@ -407,7 +427,10 @@ def grafico_incassi():
         dati_grafico[data_str]['totale'] += totale
         dati_grafico[data_str]['count'] += 1
     
-    return render_template('grafico_incassi.html', dati_grafico=dati_grafico)
+    return render_template('grafico_incassi.html', 
+                         dati_grafico=dati_grafico,
+                         data_inizio=data_inizio,
+                         data_fine=data_fine)
 
 @app.route('/incassi/<int:id>')
 @login_required
