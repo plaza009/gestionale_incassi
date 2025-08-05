@@ -82,23 +82,34 @@
                             <h6 class="text-primary mb-3">Dettagli Cash</h6>
                             
                             <div class="mb-3">
+                                <label for="chiusura_fiscale" class="form-label">
+                                    <i class="fas fa-receipt me-1"></i>
+                                    Chiusura Fiscale (€)
+                                </label>
+                                <input type="number" step="0.01" class="form-control" id="chiusura_fiscale" name="chiusura_fiscale" 
+                                       value="{{ incasso.chiusura_fiscale or 0 }}">
+                                <div class="form-text">Totale scontrinato certificato a fine lavoro</div>
+                            </div>
+                            
+                            <!-- Campi legacy mantenuti per compatibilità -->
+                            <div class="mb-3" style="display: none;">
                                 <label for="cash_scontrinato" class="form-label">
                                     <i class="fas fa-receipt me-1"></i>
-                                    Cash Scontrinato (€)
+                                    Cash Scontrinato (€) - Legacy
                                 </label>
                                 <input type="number" step="0.01" class="form-control" id="cash_scontrinato" name="cash_scontrinato" 
                                        value="{{ incasso.cash_scontrinato }}">
-                                <div class="form-text">Cash con scontrino fiscale</div>
+                                <div class="form-text">Cash con scontrino fiscale (legacy)</div>
                             </div>
                             
-                            <div class="mb-3">
+                            <div class="mb-3" style="display: none;">
                                 <label for="cash_non_scontrinato" class="form-label">
                                     <i class="fas fa-exclamation-triangle me-1"></i>
-                                    Cash Non Scontrinato (€)
+                                    Cash Non Scontrinato (€) - Legacy
                                 </label>
                                 <input type="number" step="0.01" class="form-control" id="cash_non_scontrinato" name="cash_non_scontrinato" 
                                        value="{{ incasso.cash_non_scontrinato }}">
-                                <div class="form-text">Cash senza scontrino fiscale</div>
+                                <div class="form-text">Cash senza scontrino fiscale (legacy)</div>
                             </div>
                             
                             <div class="mb-3">

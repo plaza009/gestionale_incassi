@@ -71,16 +71,22 @@
                     <div class="col-md-6">
                         <h6 class="text-primary mb-3">Dettagli Cash</h6>
                         <table class="table table-borderless">
+                            {% if incasso.chiusura_fiscale > 0 %}
                             <tr>
-                                <td><strong>Cash Scontrinato:</strong></td>
+                                <td><strong>Chiusura Fiscale:</strong></td>
+                                <td>€{{ "%.2f"|format(incasso.chiusura_fiscale) }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <td><strong>Cash Scontrinato (Legacy):</strong></td>
                                 <td>€{{ "%.2f"|format(incasso.cash_scontrinato) }}</td>
                             </tr>
                             <tr>
-                                <td><strong>Cash Non Scontrinato:</strong></td>
+                                <td><strong>Cash Non Scontrinato (Legacy):</strong></td>
                                 <td>€{{ "%.2f"|format(incasso.cash_non_scontrinato) }}</td>
                             </tr>
                             <tr>
-                                <td><strong>Totale Dichiarato:</strong></td>
+                                <td><strong>Totale Dichiarato (Legacy):</strong></td>
                                 <td>€{{ "%.2f"|format(incasso.cash_scontrinato + incasso.cash_non_scontrinato) }}</td>
                             </tr>
                         </table>

@@ -69,21 +69,31 @@
                             <h6 class="text-primary mb-3">Dettagli Cash (Amministratore)</h6>
                             
                             <div class="mb-3">
-                                <label for="cash_scontrinato" class="form-label">
+                                <label for="chiusura_fiscale" class="form-label">
                                     <i class="fas fa-receipt me-1"></i>
-                                    Cash Scontrinato (€)
+                                    Chiusura Fiscale (€)
                                 </label>
-                                <input type="number" step="0.01" class="form-control" id="cash_scontrinato" name="cash_scontrinato" value="0">
-                                <div class="form-text">Cash con scontrino fiscale</div>
+                                <input type="number" step="0.01" class="form-control" id="chiusura_fiscale" name="chiusura_fiscale" value="0">
+                                <div class="form-text">Totale scontrinato certificato a fine lavoro</div>
                             </div>
                             
-                            <div class="mb-3">
+                            <!-- Campi legacy mantenuti per compatibilità -->
+                            <div class="mb-3" style="display: none;">
+                                <label for="cash_scontrinato" class="form-label">
+                                    <i class="fas fa-receipt me-1"></i>
+                                    Cash Scontrinato (€) - Legacy
+                                </label>
+                                <input type="number" step="0.01" class="form-control" id="cash_scontrinato" name="cash_scontrinato" value="0">
+                                <div class="form-text">Cash con scontrino fiscale (legacy)</div>
+                            </div>
+                            
+                            <div class="mb-3" style="display: none;">
                                 <label for="cash_non_scontrinato" class="form-label">
                                     <i class="fas fa-exclamation-triangle me-1"></i>
-                                    Cash Non Scontrinato (€)
+                                    Cash Non Scontrinato (€) - Legacy
                                 </label>
                                 <input type="number" step="0.01" class="form-control" id="cash_non_scontrinato" name="cash_non_scontrinato" value="0">
-                                <div class="form-text">Cash senza scontrino fiscale</div>
+                                <div class="form-text">Cash senza scontrino fiscale (legacy)</div>
                             </div>
                             {% else %}
                             <div class="alert alert-info">
@@ -92,7 +102,7 @@
                                     Informazioni per Dipendenti
                                 </h6>
                                 <p class="mb-0">
-                                    I campi "Cash Scontrinato" e "Cash Non Scontrinato" saranno compilati dall'amministratore 
+                                    Il campo "Chiusura Fiscale" sarà compilato dall'amministratore 
                                     durante la revisione dei dati. È sufficiente inserire i tre campi obbligatori.
                                 </p>
                             </div>
@@ -199,10 +209,8 @@ function calcolaTotaleAtteso() {
 
 function verificaCoerenza() {
     const incassoCashEffettivo = calcolaIncassoCashEffettivo();
-    const cashScontrinato = parseFloat(document.getElementById('cash_scontrinato')?.value || 0);
-    const cashNonScontrinato = parseFloat(document.getElementById('cash_non_scontrinato')?.value || 0);
-    const totaleDichiarato = cashScontrinato + cashNonScontrinato;
-    const differenza = incassoCashEffettivo - totaleDichiarato;
+    const chiusuraFiscale = parseFloat(document.getElementById('chiusura_fiscale')?.value || 0);
+    const differenza = incassoCashEffettivo - chiusuraFiscale;
     
     if (Math.abs(differenza) <= 0.01) {
         return { stato: 'Coerente', classe: 'bg-success' };
@@ -232,14 +240,10 @@ document.getElementById('incasso_pos').addEventListener('input', aggiornaCalcoli
 document.getElementById('cash_totale').addEventListener('input', aggiornaCalcoli);
 
 // Aggiungi event listeners solo se i campi esistono (solo per admin)
-const cashScontrinatoElement = document.getElementById('cash_scontrinato');
-const cashNonScontrinatoElement = document.getElementById('cash_non_scontrinato');
+const chiusuraFiscaleElement = document.getElementById('chiusura_fiscale');
 
-if (cashScontrinatoElement) {
-    cashScontrinatoElement.addEventListener('input', aggiornaCalcoli);
-}
-if (cashNonScontrinatoElement) {
-    cashNonScontrinatoElement.addEventListener('input', aggiornaCalcoli);
+if (chiusuraFiscaleElement) {
+    chiusuraFiscaleElement.addEventListener('input', aggiornaCalcoli);
 }
 
 // Gestione campo motivo prelievo

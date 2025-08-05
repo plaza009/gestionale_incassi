@@ -50,8 +50,9 @@ class Incasso(db.Model):
     fondo_cassa_iniziale = db.Column(db.Float, nullable=False)
     incasso_pos = db.Column(db.Float, nullable=False)
     cash_totale_cassa = db.Column(db.Float, nullable=False)
-    cash_scontrinato = db.Column(db.Float, default=0)
-    cash_non_scontrinato = db.Column(db.Float, default=0)
+    cash_scontrinato = db.Column(db.Float, default=0)  # Mantenuto per compatibilità
+    cash_non_scontrinato = db.Column(db.Float, default=0)  # Mantenuto per compatibilità
+    chiusura_fiscale = db.Column(db.Float, default=0)  # Nuovo campo per chiusura fiscale
     prelievo_importo = db.Column(db.Float, default=0)
     prelievo_motivo = db.Column(db.String(100), default='')
     note = db.Column(db.Text)
@@ -92,7 +93,24 @@ def calcola_totale_incasso_atteso(incasso_pos, incasso_cash_effettivo, prelievo_
     totale_base = incasso_pos + incasso_cash_effettivo
     return totale_base - prelievo_importo
 
+def verifica_coerenza_chiusura_fiscale(incasso_pos, cash_totale, chiusura_fiscale, fondo_cassa, prelievo_importo=0):
+    """Nuova logica di verifica coerenza basata sulla chiusura fiscale"""
+    # Calcolo: Incasso POS + Cash Totale - Chiusura Fiscale - Fondo Cassa - Prelievo
+    cash_effettivo = cash_totale - fondo_cassa
+    totale_atteso = incasso_pos + cash_effettivo
+    totale_verificato = chiusura_fiscale + fondo_cassa + prelievo_importo
+    
+    differenza = totale_atteso - totale_verificato
+    
+    if abs(differenza) > 0.01:  # Tolleranza di 1 centesimo
+        if differenza > 0:
+            return f"Importo non scontrinato: €{differenza:.2f}"
+        else:
+            return f"Discrepanza: €{abs(differenza):.2f} - verificare conteggio"
+    return "Coerente"
+
 def verifica_coerenza(incasso_cash_effettivo, cash_scontrinato, cash_non_scontrinato):
+    """Funzione legacy mantenuta per compatibilità"""
     totale_dichiarato = cash_scontrinato + cash_non_scontrinato
     differenza = incasso_cash_effettivo - totale_dichiarato
     
@@ -110,17 +128,31 @@ def calcola_anomalie_incasso(incasso):
     # Calcola cash effettivo
     incasso_cash_effettivo = calcola_incasso_cash_effettivo(incasso.fondo_cassa_iniziale, incasso.cash_totale_cassa)
     
-    # Verifica coerenza cash
-    totale_dichiarato = incasso.cash_scontrinato + incasso.cash_non_scontrinato
-    differenza = abs(incasso_cash_effettivo - totale_dichiarato)
+    # Verifica coerenza con chiusura fiscale (nuova logica)
+    if hasattr(incasso, 'chiusura_fiscale') and incasso.chiusura_fiscale > 0:
+        totale_atteso = incasso.incasso_pos + incasso_cash_effettivo
+        totale_verificato = incasso.chiusura_fiscale + incasso.fondo_cassa_iniziale + incasso.prelievo_importo
+        differenza = totale_atteso - totale_verificato
+        
+        if abs(differenza) > 0.01:
+            anomalie.append({
+                'tipo': 'discrepanza_chiusura_fiscale',
+                'severita': 'warning',
+                'messaggio': f'Discrepanza chiusura fiscale: €{differenza:.2f}',
+                'dettagli': f'Atteso: €{totale_atteso:.2f}, Verificato: €{totale_verificato:.2f}'
+            })
     
-    if totale_dichiarato > 0 and differenza > 0.01:  # Solo se c'è un dettaglio cash
-        anomalie.append({
-            'tipo': 'discrepanza_cash',
-            'severita': 'warning',
-            'messaggio': f'Discrepanza cash di €{differenza:.2f}',
-            'dettagli': f'Cash effettivo: €{incasso_cash_effettivo:.2f}, Dichiarato: €{totale_dichiarato:.2f}'
-        })
+    # Verifica coerenza cash legacy (mantenuto per compatibilità)
+    totale_dichiarato = incasso.cash_scontrinato + incasso.cash_non_scontrinato
+    if totale_dichiarato > 0:
+        differenza = abs(incasso_cash_effettivo - totale_dichiarato)
+        if differenza > 0.01:
+            anomalie.append({
+                'tipo': 'discrepanza_cash_legacy',
+                'severita': 'info',
+                'messaggio': f'Discrepanza cash legacy: €{differenza:.2f}',
+                'dettagli': f'Cash effettivo: €{incasso_cash_effettivo:.2f}, Dichiarato: €{totale_dichiarato:.2f}'
+            })
     
     # Verifica valori negativi
     if incasso.fondo_cassa_iniziale < 0:
@@ -231,6 +263,7 @@ def nuovo_incasso():
             cash_totale = float(request.form['cash_totale'])
             cash_scontrinato = float(request.form.get('cash_scontrinato', 0))
             cash_non_scontrinato = float(request.form.get('cash_non_scontrinato', 0))
+            chiusura_fiscale = float(request.form.get('chiusura_fiscale', 0))
             prelievo_importo = float(request.form.get('prelievo_importo', 0))
             prelievo_motivo = request.form.get('prelievo_motivo', '')
             note = request.form.get('note', '')
@@ -238,7 +271,12 @@ def nuovo_incasso():
             # Calcoli automatici
             incasso_cash_effettivo = calcola_incasso_cash_effettivo(fondo_cassa, cash_totale)
             totale_atteso = calcola_totale_incasso_atteso(incasso_pos, incasso_cash_effettivo, prelievo_importo)
-            coerenza = verifica_coerenza(incasso_cash_effettivo, cash_scontrinato, cash_non_scontrinato)
+            
+            # Usa la nuova logica di coerenza se chiusura_fiscale è fornita
+            if chiusura_fiscale > 0:
+                coerenza = verifica_coerenza_chiusura_fiscale(incasso_pos, cash_totale, chiusura_fiscale, fondo_cassa, prelievo_importo)
+            else:
+                coerenza = verifica_coerenza(incasso_cash_effettivo, cash_scontrinato, cash_non_scontrinato)
             
             incasso = Incasso(
                 operatore_id=current_user.id,
@@ -248,6 +286,7 @@ def nuovo_incasso():
                 cash_totale_cassa=cash_totale,
                 cash_scontrinato=cash_scontrinato,
                 cash_non_scontrinato=cash_non_scontrinato,
+                chiusura_fiscale=chiusura_fiscale,
                 prelievo_importo=prelievo_importo,
                 prelievo_motivo=prelievo_motivo,
                 note=note
@@ -403,6 +442,7 @@ def modifica_incasso(id):
             incasso.cash_totale_cassa = float(request.form['cash_totale'])
             incasso.cash_scontrinato = float(request.form.get('cash_scontrinato', 0))
             incasso.cash_non_scontrinato = float(request.form.get('cash_non_scontrinato', 0))
+            incasso.chiusura_fiscale = float(request.form.get('chiusura_fiscale', 0))
             incasso.prelievo_importo = float(request.form.get('prelievo_importo', 0))
             incasso.prelievo_motivo = request.form.get('prelievo_motivo', '')
             incasso.note = request.form.get('note', '')
