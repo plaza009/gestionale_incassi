@@ -306,7 +306,12 @@ def nuovo_incasso():
             db.session.add(incasso)
             db.session.commit()
             
-            flash(f'Incasso registrato con successo. {coerenza}', 'success')
+            # Messaggio diverso per admin e dipendenti
+            if current_user.is_admin:
+                flash(f'Incasso registrato con successo. {coerenza}', 'success')
+            else:
+                flash('Incasso inviato per approvazione con successo.', 'success')
+            
             return redirect(url_for('dashboard'))
             
         except ValueError:
