@@ -136,20 +136,32 @@
                             <div class="alert alert-info">
                                 <h6 class="alert-heading">
                                     <i class="fas fa-calculator me-2"></i>
-                                    Calcoli Automatici
+                                    Calcoli Automatici (Aggiornamento in Tempo Reale)
                                 </h6>
                                 <div class="row">
-                                    <div class="col-md-4">
-                                        <strong>Incasso Cash Effettivo:</strong>
-                                        <span id="incasso_cash_effettivo">€0.00</span>
+                                    <div class="col-md-3">
+                                        <strong>Incasso Cash Effettivo:</strong><br>
+                                        <span id="incasso_cash_effettivo" class="h5 text-primary">€0.00</span>
                                     </div>
-                                    <div class="col-md-4">
-                                        <strong>Totale Incasso Atteso:</strong>
-                                        <span id="totale_atteso">€0.00</span>
+                                    <div class="col-md-3">
+                                        <strong>Totale Incasso Atteso:</strong><br>
+                                        <span id="totale_atteso" class="h5 text-success">€0.00</span>
                                     </div>
-                                    <div class="col-md-4">
-                                        <strong>Stato Coerenza:</strong>
-                                        <span id="coerenza" class="badge bg-secondary">Non calcolato</span>
+                                    <div class="col-md-3">
+                                        <strong>Chiusura Fiscale:</strong><br>
+                                        <span id="chiusura_fiscale_display" class="h5 text-info">€0.00</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Stato Coerenza:</strong><br>
+                                        <span id="coerenza" class="badge bg-secondary fs-6">Non calcolato</span>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            I calcoli si aggiornano automaticamente mentre inserisci i dati
+                                        </small>
                                     </div>
                                 </div>
                             </div>
@@ -212,14 +224,16 @@ function verificaCoerenza() {
 function aggiornaCalcoli() {
     const incassoCashEffettivo = calcolaIncassoCashEffettivo();
     const totaleAtteso = calcolaTotaleAtteso();
+    const chiusuraFiscale = parseFloat(document.getElementById('chiusura_fiscale')?.value || 0);
     const coerenza = verificaCoerenza();
     
     document.getElementById('incasso_cash_effettivo').textContent = `€${incassoCashEffettivo.toFixed(2)}`;
     document.getElementById('totale_atteso').textContent = `€${totaleAtteso.toFixed(2)}`;
+    document.getElementById('chiusura_fiscale_display').textContent = `€${chiusuraFiscale.toFixed(2)}`;
     
     const coerenzaElement = document.getElementById('coerenza');
     coerenzaElement.textContent = coerenza.stato;
-    coerenzaElement.className = `badge ${coerenza.classe}`;
+    coerenzaElement.className = `badge ${coerenza.classe} fs-6`;
 }
 
 // Event listeners per aggiornamento automatico
@@ -230,10 +244,14 @@ document.getElementById('prelievo_importo').addEventListener('input', aggiornaCa
 
 // Aggiungi event listeners solo se i campi esistono
 const chiusuraFiscaleElement = document.getElementById('chiusura_fiscale');
-
 if (chiusuraFiscaleElement) {
     chiusuraFiscaleElement.addEventListener('input', aggiornaCalcoli);
 }
+
+// Calcola valori iniziali al caricamento della pagina
+document.addEventListener('DOMContentLoaded', function() {
+    aggiornaCalcoli();
+});
 
 // Gestione campo motivo prelievo
 function gestisciMotivoPrelievo() {
