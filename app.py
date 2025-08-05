@@ -95,18 +95,17 @@ def calcola_totale_incasso_atteso(incasso_pos, incasso_cash_effettivo, prelievo_
 
 def verifica_coerenza_chiusura_fiscale(incasso_pos, cash_totale, chiusura_fiscale, fondo_cassa, prelievo_importo=0):
     """Nuova logica di verifica coerenza basata sulla chiusura fiscale"""
-    # Calcolo: Incasso POS + Cash Totale - Chiusura Fiscale - Fondo Cassa - Prelievo
+    # Calcolo corretto: Totale Incasso Atteso (già scorporato) - Chiusura Fiscale = Importo non scontrinato
     cash_effettivo = cash_totale - fondo_cassa
-    totale_atteso = incasso_pos + cash_effettivo
-    totale_verificato = chiusura_fiscale + fondo_cassa + prelievo_importo
+    totale_incasso_atteso = incasso_pos + cash_effettivo - prelievo_importo  # Già scorporato di prelievi e fondo cassa
     
-    differenza = totale_atteso - totale_verificato
+    importo_non_scontrinato = totale_incasso_atteso - chiusura_fiscale
     
-    if abs(differenza) > 0.01:  # Tolleranza di 1 centesimo
-        if differenza > 0:
-            return f"Importo non scontrinato: €{differenza:.2f}"
+    if abs(importo_non_scontrinato) > 0.01:  # Tolleranza di 1 centesimo
+        if importo_non_scontrinato > 0:
+            return f"Importo non scontrinato: €{importo_non_scontrinato:.2f}"
         else:
-            return f"Discrepanza: €{abs(differenza):.2f} - verificare conteggio"
+            return f"Discrepanza: €{abs(importo_non_scontrinato):.2f} - verificare conteggio"
     return "Coerente"
 
 def verifica_coerenza(incasso_cash_effettivo, cash_scontrinato, cash_non_scontrinato):
@@ -130,16 +129,16 @@ def calcola_anomalie_incasso(incasso):
     
     # Verifica coerenza con chiusura fiscale (nuova logica)
     if hasattr(incasso, 'chiusura_fiscale') and incasso.chiusura_fiscale > 0:
-        totale_atteso = incasso.incasso_pos + incasso_cash_effettivo
-        totale_verificato = incasso.chiusura_fiscale + incasso.fondo_cassa_iniziale + incasso.prelievo_importo
-        differenza = totale_atteso - totale_verificato
+        cash_effettivo = calcola_incasso_cash_effettivo(incasso.fondo_cassa_iniziale, incasso.cash_totale_cassa)
+        totale_incasso_atteso = incasso.incasso_pos + cash_effettivo - incasso.prelievo_importo  # Già scorporato
+        importo_non_scontrinato = totale_incasso_atteso - incasso.chiusura_fiscale
         
-        if abs(differenza) > 0.01:
+        if abs(importo_non_scontrinato) > 0.01:
             anomalie.append({
                 'tipo': 'discrepanza_chiusura_fiscale',
                 'severita': 'warning',
-                'messaggio': f'Discrepanza chiusura fiscale: €{differenza:.2f}',
-                'dettagli': f'Atteso: €{totale_atteso:.2f}, Verificato: €{totale_verificato:.2f}'
+                'messaggio': f'Importo non scontrinato: €{importo_non_scontrinato:.2f}',
+                'dettagli': f'Totale atteso: €{totale_incasso_atteso:.2f}, Chiusura fiscale: €{incasso.chiusura_fiscale:.2f}'
             })
     
     # Verifica coerenza cash legacy (mantenuto per compatibilità)

@@ -63,10 +63,9 @@
                             </div>
                         </div>
                         
-                        <!-- Dettagli cash (solo per admin) -->
+                        <!-- Dettagli cash -->
                         <div class="col-md-6">
-                            {% if current_user.is_admin %}
-                            <h6 class="text-primary mb-3">Dettagli Cash (Amministratore)</h6>
+                            <h6 class="text-primary mb-3">Dettagli Cash</h6>
                             
                             <div class="mb-3">
                                 <label for="chiusura_fiscale" class="form-label">
@@ -95,18 +94,6 @@
                                 <input type="number" step="0.01" class="form-control" id="cash_non_scontrinato" name="cash_non_scontrinato" value="0">
                                 <div class="form-text">Cash senza scontrino fiscale (legacy)</div>
                             </div>
-                            {% else %}
-                            <div class="alert alert-info">
-                                <h6 class="alert-heading">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    Informazioni per Dipendenti
-                                </h6>
-                                <p class="mb-0">
-                                    Il campo "Chiusura Fiscale" sarà compilato dall'amministratore 
-                                    durante la revisione dei dati. È sufficiente inserire i tre campi obbligatori.
-                                </p>
-                            </div>
-                            {% endif %}
                             
                             <div class="mb-3">
                                 <label for="prelievo_importo" class="form-label">
@@ -204,20 +191,21 @@ function calcolaIncassoCashEffettivo() {
 function calcolaTotaleAtteso() {
     const incassoPos = parseFloat(document.getElementById('incasso_pos').value) || 0;
     const incassoCashEffettivo = calcolaIncassoCashEffettivo();
-    return incassoPos + incassoCashEffettivo;
+    const prelievoImporto = parseFloat(document.getElementById('prelievo_importo').value) || 0;
+    return incassoPos + incassoCashEffettivo - prelievoImporto;  // Già scorporato di prelievi
 }
 
 function verificaCoerenza() {
-    const incassoCashEffettivo = calcolaIncassoCashEffettivo();
+    const totaleIncassoAtteso = calcolaTotaleAtteso();  // Già scorporato di prelievi e fondo cassa
     const chiusuraFiscale = parseFloat(document.getElementById('chiusura_fiscale')?.value || 0);
-    const differenza = incassoCashEffettivo - chiusuraFiscale;
+    const importoNonScontrinato = totaleIncassoAtteso - chiusuraFiscale;
     
-    if (Math.abs(differenza) <= 0.01) {
+    if (Math.abs(importoNonScontrinato) <= 0.01) {
         return { stato: 'Coerente', classe: 'bg-success' };
-    } else if (differenza > 0) {
-        return { stato: `Eccedenza €${differenza.toFixed(2)}`, classe: 'bg-warning' };
+    } else if (importoNonScontrinato > 0) {
+        return { stato: `Non scontrinato €${importoNonScontrinato.toFixed(2)}`, classe: 'bg-warning' };
     } else {
-        return { stato: `Deficit €${Math.abs(differenza).toFixed(2)}`, classe: 'bg-danger' };
+        return { stato: `Discrepanza €${Math.abs(importoNonScontrinato).toFixed(2)}`, classe: 'bg-danger' };
     }
 }
 
@@ -238,8 +226,9 @@ function aggiornaCalcoli() {
 document.getElementById('fondo_cassa').addEventListener('input', aggiornaCalcoli);
 document.getElementById('incasso_pos').addEventListener('input', aggiornaCalcoli);
 document.getElementById('cash_totale').addEventListener('input', aggiornaCalcoli);
+document.getElementById('prelievo_importo').addEventListener('input', aggiornaCalcoli);
 
-// Aggiungi event listeners solo se i campi esistono (solo per admin)
+// Aggiungi event listeners solo se i campi esistono
 const chiusuraFiscaleElement = document.getElementById('chiusura_fiscale');
 
 if (chiusuraFiscaleElement) {
