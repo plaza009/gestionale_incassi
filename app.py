@@ -231,18 +231,30 @@ def logout():
 def dashboard():
     oggi = date.today()
     
-    # Filtri per ruolo utente
-    if current_user.is_admin:
+    # Gestione temporanea per la colonna chiusura_fiscale
+    try:
         incassi_oggi = Incasso.query.filter_by(data=oggi).all()
-    else:
-        # I dipendenti vedono solo i propri incassi non approvati di oggi
-        incassi_oggi = Incasso.query.filter_by(
-            data=oggi, 
-            operatore_id=current_user.id, 
-            approvato=False
-        ).all()
+    except Exception as e:
+        if "chiusura_fiscale" in str(e):
+            # Se la colonna non esiste, usa una query senza chiusura_fiscale
+            incassi_oggi = db.session.execute(
+                "SELECT * FROM incasso WHERE data = :data",
+                {'data': oggi}
+            ).fetchall()
+            # Converti i risultati in oggetti Incasso
+            incassi_oggi = [Incasso(**dict(row)) for row in incassi_oggi]
+        else:
+            raise e
     
-    cassaforte_oggi = Cassaforte.query.filter_by(data=oggi).all()
+    # Filtra per dipendenti (solo i propri non approvati)
+    if not current_user.is_admin:
+        incassi_oggi = [inc for inc in incassi_oggi if inc.operatore_id == current_user.id and not inc.approvato]
+    
+    # Ottieni movimenti cassaforte di oggi
+    try:
+        cassaforte_oggi = Cassaforte.query.filter_by(data=oggi).all()
+    except Exception as e:
+        cassaforte_oggi = []
     
     return render_template('dashboard.html', 
                          incassi_oggi=incassi_oggi,
